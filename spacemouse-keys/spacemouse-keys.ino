@@ -27,7 +27,7 @@
 #if ROTARY_AXIS > 0
   // if an encoder wheel is used
   #include "encoderWheel.h" 
-#endif 
+#endif
 
 // the debug mode can be set during runtime via the serial interface
 int debug = STARTDEBUG;
@@ -42,6 +42,9 @@ int keyVals[NUMKEYS];
 // final value of the keys, after debouncing
 uint8_t keyOut[NUMKEYS];
 uint8_t keyState[NUMKEYS];
+
+// create a new string that will be used to store data received through serial communication
+String inputString;
 
 //Modifier Functions
 int modifierFunction(int x) {
@@ -70,6 +73,50 @@ int modifierFunction(int x) {
   result = constrain(result, -350, 350);
   //converting doubles to int again
   return (int)round(result);
+}
+
+void processPair(String pair) {
+    // Find the position of the '=' sign
+    int separatorIndex = pair.indexOf('=');
+
+    // Split the string into key and value
+    String key = pair.substring(0, separatorIndex);
+    String value = pair.substring(separatorIndex + 1);
+
+    // Use the results
+    if (key == "TRANSX_SENSITIVITY") {
+        TRANSX_SENSITIVITY = value.toFloat();
+    }
+    if (key == "TRANSY_SENSITIVITY") {
+        TRANSY_SENSITIVITY = value.toFloat();
+    }
+    if (key == "POS_TRANSZ_SENSITIVITY") {
+        POS_TRANSZ_SENSITIVITY = value.toFloat();
+    }
+    if (key == "NEG_TRANSZ_SENSITIVITY") {
+        NEG_TRANSZ_SENSITIVITY = value.toFloat();
+    }
+    if (key == "GATE_NEG_TRANSZ") {
+        GATE_NEG_TRANSZ = value.toFloat();
+    }
+    if (key == "GATE_ROTX") {
+        GATE_ROTX = value.toFloat();
+    }
+    if (key == "GATE_ROTY") {
+        GATE_ROTY = value.toFloat();
+    }
+    if (key == "GATE_ROTZ") {
+        GATE_ROTZ = value.toFloat();
+    }
+    if (key == "ROTX_SENSITIVITY") {
+        ROTX_SENSITIVITY = value.toFloat();
+    }
+    if (key == "ROTY_SENSITIVITY") {
+        ROTY_SENSITIVITY = value.toFloat();
+    }
+    if (key == "ROTZ_SENSITIVITY") {
+        ROTZ_SENSITIVITY = value.toFloat();
+    }
 }
 
 void setup() {
@@ -109,15 +156,33 @@ int tmpInput;  // store the value, the user might input over the serial
 
 void loop() {
   //check if the user entered a debug mode via serial interface
+  // if (Serial.available()) {
+  //   tmpInput = Serial.parseInt();  // Read from serial interface, if a new debug value has been sent. Serial timeout has been set in setup()
+  //   if (tmpInput != 0) {
+  //     debug = tmpInput;
+  //     if (tmpInput == -1) {
+  //       Serial.println(F("Please enter the debug mode now or while the script is reporting."));
+  //     }
+  //   }
+  // }
   if (Serial.available()) {
-    tmpInput = Serial.parseInt();  // Read from serial interface, if a new debug value has been sent. Serial timeout has been set in setup()
-    if (tmpInput != 0) {
-      debug = tmpInput;
-      if (tmpInput == -1) {
-        Serial.println(F("Please enter the debug mode now or while the script is reporting."));
-      }
+        inputString = Serial.readStringUntil('\n');  // Read the input string
+
+        // Split the string by commas
+        int startIndex = 0;
+        int endIndex = inputString.indexOf(',');
+
+        while (endIndex != -1) {
+            String pair = inputString.substring(startIndex, endIndex);
+            processPair(pair);
+            startIndex = endIndex + 1;
+            endIndex = inputString.indexOf(',', startIndex);
+        }
+
+        // Process the last pair (or the only pair if no commas were found)
+        String lastPair = inputString.substring(startIndex);
+        processPair(lastPair);
     }
-  }
 
   // Joystick values are read. 0-1023
   readAllFromJoystick(rawReads);
