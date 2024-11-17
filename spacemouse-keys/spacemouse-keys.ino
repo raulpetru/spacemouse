@@ -138,9 +138,10 @@ void setup() {
 #if ROTARY_AXIS > 0
   initEncoderWheel();
 #endif
-
+#ifdef LEDpin
   // configure LED output
   pinMode(LEDpin, OUTPUT);
+#endif
 }
 
 int rawReads[8], centered[8];
@@ -351,6 +352,7 @@ void loop() {
     updateFrequencyReport();
   }
 
+#ifdef LEDpin
   // Check for the LED state by calling updateLEDState. 
   // This empties the USB input buffer and checks for the corresponding report.
   #ifdef LEDinvert
@@ -366,5 +368,5 @@ void loop() {
     // false -> LED off -> pull kathode up 
     digitalWrite(LEDpin, HIGH);   // turn the LED 
   }
-
+#endif
 }
